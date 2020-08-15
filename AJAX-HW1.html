@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+</head>
+
+<body>
+
+  <section class="user-wrapper mt-5 mb-5">
+    <div class="container">
+      <div class="row">
+        <div class="col col-4">
+          <div class="card">
+            <div class="card-header">
+              User List
+            </div>
+            <ul class="list-group user-list"></ul>
+          </div>
+        </div>
+        <div class="col col-6">
+          <div class="user-info"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+
+    const apiUrl = 'https://jsonplaceholder.typicode.com';
+    const usersListEl = document.querySelector('.user-list');
+    const userInfoEl = document.querySelector('.user-info');
+    // 1. Запрос получения пользователей
+    // 2. Реализовать обработчик ответа от сервера
+    // 3. рендер списка пользователей
+    // 4. повесить событие клика на список 
+    // 5. получаем id пользователя 
+    // 6. делаем запрос на сервер получая запрос о пользователе
+    // 7. обработчик на получение ответа от сервера
+    // 8. рендерим инфу о пользователе 
+
+    function getHTTP(id, callback, url = `${apiUrl}/users/`) {
+      const xhr = new XMLHttpRequest;
+
+      if (id !== null) {
+        url = `${apiUrl}/users/${id}`
+      }
+
+      xhr.open('get', url);
+
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status !== 200) {
+          console.log('error', xhr.status);
+          return
+        }
+
+        const res = JSON.parse(xhr.responseText);
+
+        callback(res);
+      })
+
+      xhr.send();
+    }
+
+    function onGetUsersCallback(users) {
+      if (!users.length) {
+        return
+      }
+      renderUsersList(users);
+    }
+
+    function renderUsersList(users) {
+      const fragment = users.reduce((acc, user) => acc + userListItemTemplate(user), '');
+
+      usersListEl.insertAdjacentHTML('afterbegin', fragment);
+    }
+
+    function userListItemTemplate(user) {
+      return `
+        <button type="button" class="list-group-item list-group-item-action" data-user-id="${user.id}">
+          ${user.name}  
+        </button>
+      `;
+    }
+
+    //DOM Event
+    usersListEl.addEventListener('click', onUserClickHandler);
+
+    function onUserClickHandler(e) {
+      e.preventDefault();
+
+      if (e.target.dataset.userId) {
+        getHTTP(e.target.dataset.userId, onGetUserInfoCallback);
+      }
+    }
+
+    function onGetUserInfoCallback(user) {
+      if (!user.id) {
+        console.log('user not found');
+        return;
+      }
+
+      renderUserInfo(user);
+    }
+
+    function renderUserInfo(user) {
+      userInfoEl.innerHTML = '';
+
+      const template = usersInfoTemplate(user);
+
+      userInfoEl.insertAdjacentHTML('afterbegin', template);
+    }
+
+    function usersInfoTemplate(user) {
+      return `
+        <div class="card border-dark mb-3">
+          <div class="card-header">${user.name}</div>
+          <div class="card-body text-dark">
+            <h5 class="card-title">${user.email}</h5>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item"><b>Nickname:</b>${user.username}</li>
+              <li class="list-group-item"><b>Website:</b>${user.webcite}</li>
+              <li class="list-group-item"><b>Company:</b>${user.company.name}</li>
+              <li class="list-group-item"><b>City:</b>${user.address.city}</li>
+            </ul>
+          </div>
+          <div class="card-footer bg-transparent border-dark">Phone: ${user.phone}</div>
+        </div>
+      `;
+    }
+
+    // Init App
+    getHTTP(null, onGetUsersCallback);
+
+  </script>
+</body>
+
+</html>
